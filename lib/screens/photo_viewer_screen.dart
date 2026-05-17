@@ -25,6 +25,8 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   late int _currentIndex;
   bool _isAppBarVisible = true;
   Timer? _appBarTimer;
+  bool _isInteracting = false;
+  final Map<int, double> _pageScales = <int, double>{};
 
   @override
   void initState() {
@@ -64,9 +66,39 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     if (!mounted) {
       return;
     }
-    setState(() => _currentIndex = index);
+    setState(() {
+      _currentIndex = index;
+      _isInteracting = false;
+    });
     // Swiping should refresh the timer so the user has time to read the count.
     _scheduleAutoHide();
+  }
+
+  void _onInteractionChanged(bool isInteracting) {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isInteracting = isInteracting);
+  }
+
+  void _onScaleChanged(double scale) {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _pageScales[_currentIndex] = scale);
+  }
+
+  bool get _isCurrentPageZoomed {
+    final double scale = _pageScales[_currentIndex] ?? 1.0;
+    return scale > 1.01;
+  }
+
+  ScrollPhysics get _pageScrollPhysics {
+    // Disable paging while zooming or pinching to prevent gesture conflicts.
+    if (_isInteracting || _isCurrentPageZoomed) {
+      return const NeverScrollableScrollPhysics();
+    }
+    return const AlwaysScrollableScrollPhysics();
   }
 
   @override
@@ -77,18 +109,24 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       body: Stack(
         children: [
           // The full-screen PageView handles swipe navigation.
-          GestureDetector(
-            onTap: _showAppBar,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.allPhotos.length,
-              onPageChanged: _onPageChanged,
-              // Snap ensures clean page transitions, not half-photos
-              pageSnapping: true,
-              itemBuilder: (BuildContext context, int index) {
-                return ViewerPage(imagePath: widget.allPhotos[index]);
-              },
-            ),
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.allPhotos.length,
+            onPageChanged: _onPageChanged,
+            physics: _pageScrollPhysics,
+            // Snap ensures clean page transitions, not half-photos.
+            pageSnapping: true,
+            itemBuilder: (BuildContext context, int index) {
+              return ViewerPage(
+                key: ValueKey<String>(widget.allPhotos[index]),
+                imagePath: widget.allPhotos[index],
+                onInteractionChanged: _onInteractionChanged,
+                onScaleChanged: _onScaleChanged,
+                // onTap and onDoubleTap share the same GestureDetector inside
+                // ViewerPage so Flutter correctly disambiguates them.
+                onTap: _showAppBar,
+              );
+            },
           ),
           // The overlay AppBar fades away to keep the photo immersive.
           Positioned(

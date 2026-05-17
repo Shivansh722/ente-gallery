@@ -22,6 +22,7 @@ class App extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
+      debugShowCheckedModeBanner: false,
       home: const GalleryScreen(),
     );
   }

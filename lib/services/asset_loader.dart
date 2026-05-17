@@ -52,7 +52,6 @@ class AssetLoader {
       "assets/gallery/image_045_Image_4.jpg",
       "assets/gallery/image_046_Image_5.jpg",
       "assets/gallery/image_047_Image_6.jpg",
-      "assets/gallery/image_048_Image_2.jpg",
       "assets/gallery/image_049_Image_1.jpg",
       "assets/gallery/image_050_Image_4.jpg",
       "assets/gallery/image_051_Image_5.jpg",
