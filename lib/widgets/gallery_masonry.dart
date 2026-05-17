@@ -10,6 +10,7 @@ class GalleryMasonry extends StatelessWidget {
     required this.aspectRatios,
     required this.columnCount,
     required this.isPinching,
+    required this.scrollController,
     required this.onColumnCountChange,
     required this.onPinchActiveChange,
     required this.onPhotoTap,
@@ -20,6 +21,7 @@ class GalleryMasonry extends StatelessWidget {
   final Map<String, double> aspectRatios;
   final int columnCount;
   final bool isPinching;
+  final ScrollController scrollController;
   final void Function(int delta) onColumnCountChange;
   final void Function(bool isActive) onPinchActiveChange;
   final void Function(int index) onPhotoTap;
@@ -30,6 +32,7 @@ class GalleryMasonry extends StatelessWidget {
       onColumnCountChange: onColumnCountChange,
       onPinchActiveChange: onPinchActiveChange,
       child: MasonryGridView.count(
+        controller: scrollController,
         padding: const EdgeInsets.all(8),
         physics: isPinching
             ? const NeverScrollableScrollPhysics()

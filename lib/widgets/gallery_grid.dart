@@ -8,6 +8,7 @@ class GalleryGrid extends StatelessWidget {
     required this.photos,
     required this.columnCount,
     required this.isPinching,
+    required this.scrollController,
     required this.onColumnCountChange,
     required this.onPinchActiveChange,
     required this.onPhotoTap,
@@ -17,6 +18,7 @@ class GalleryGrid extends StatelessWidget {
   final List<String> photos;
   final int columnCount;
   final bool isPinching;
+  final ScrollController scrollController;
   final void Function(int delta) onColumnCountChange;
   final void Function(bool isActive) onPinchActiveChange;
   final void Function(int index) onPhotoTap;
@@ -27,6 +29,7 @@ class GalleryGrid extends StatelessWidget {
       onColumnCountChange: onColumnCountChange,
       onPinchActiveChange: onPinchActiveChange,
       child: GridView.builder(
+        controller: scrollController,
         padding: const EdgeInsets.all(8),
         // Freeze scrolling while two fingers are active so the
         // GridView does not try to scroll and pinch simultaneously.

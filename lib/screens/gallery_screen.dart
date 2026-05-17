@@ -1,3 +1,5 @@
+import "dart:ui";
+
 import "package:flutter/material.dart";
 
 import "../services/asset_loader.dart";
@@ -9,6 +11,10 @@ import "../widgets/gallery_masonry.dart";
 // Column-count bounds enforced on every pinch event.
 const int kMinColumns = 2;
 const int kMaxColumns = 7;
+const double kAppBarScrollThreshold = 100.0;
+const double kAppBarBlurSigma = 10.0;
+const double kAppBarMinTintOpacity = 0.18;
+const double kAppBarMaxTintOpacity = 0.6;
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
@@ -21,6 +27,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
   static const int kInitialColumnCount = 3;
 
   final AssetLoader _assetLoader = const AssetLoader();
+  final ScrollController _scrollController = ScrollController();
+
+  double _scrollOffset = 0.0;
 
   List<String> _shuffledPhotoPaths = <String>[];
   bool _isLoadingPhotos = true;
@@ -46,7 +55,21 @@ class _GalleryScreenState extends State<GalleryScreen> {
     super.initState();
     // Load assets once at startup to keep build lightweight.
     _loadPhotos();
+    _scrollController.addListener(_onScroll);
   }
+  void _onScroll() {
+    setState(() {
+      _scrollOffset = _scrollController.offset;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
 
   @override
   void didChangeDependencies() {
@@ -135,30 +158,73 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // AppBar becomes opaque on scroll for better readability
+    final double scrollProgress =
+        (_scrollOffset / kAppBarScrollThreshold).clamp(0.0, 1.0);
+    final double blurProgress = Curves.easeOut.transform(scrollProgress);
+    final double appBarTintOpacity =
+      lerpDouble(kAppBarMinTintOpacity, kAppBarMaxTintOpacity, scrollProgress) ??
+        kAppBarMaxTintOpacity;
+    final double titleOpacity =
+      lerpDouble(0.6, 1.0, scrollProgress) ?? 1.0;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Photo Gallery"),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isMasonryMode ? Icons.view_module : Icons.dashboard,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: kAppBarBlurSigma * blurProgress,
+              sigmaY: kAppBarBlurSigma * blurProgress,
             ),
-            tooltip: _isMasonryMode ? "Show grid" : "Show masonry",
-            onPressed: () {
-              setState(() => _isMasonryMode = !_isMasonryMode);
-            },
-          ),
-          // Debug indicator: shows the live column count without any dev tool.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: Text(
-                "$_currentColumnCount cols",
-                style: Theme.of(context).textTheme.titleMedium,
+            child: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withOpacity(appBarTintOpacity),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.12 * titleOpacity),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
               ),
+              title: Opacity(
+                opacity: titleOpacity,
+                child: const Text("Photo Gallery"),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    _isMasonryMode ? Icons.view_module : Icons.dashboard,
+                  ),
+                  tooltip: _isMasonryMode ? "Show grid" : "Show masonry",
+                  onPressed: () {
+                    setState(() => _isMasonryMode = !_isMasonryMode);
+                  },
+                ),
+                // Debug indicator: shows the live column count without any dev tool.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text(
+                      "$_currentColumnCount cols",
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
       body: _buildBody(context),
     );
@@ -197,6 +263,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
         aspectRatios: _aspectRatios!,
         columnCount: _currentColumnCount,
         isPinching: _isPinching,
+        scrollController: _scrollController,
         onColumnCountChange: _onColumnCountChange,
         onPinchActiveChange: _onPinchActiveChange,
         onPhotoTap: onPhotoTap,
@@ -207,6 +274,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       photos: _shuffledPhotoPaths,
       columnCount: _currentColumnCount,
       isPinching: _isPinching,
+      scrollController: _scrollController,
       onColumnCountChange: _onColumnCountChange,
       onPinchActiveChange: _onPinchActiveChange,
       onPhotoTap: onPhotoTap,
