@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../services/asset_loader.dart";
+import "../screens/photo_viewer_screen.dart";
 import "../widgets/photo_tile.dart";
 import "../widgets/pinch_detector.dart";
 
@@ -112,7 +113,20 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 itemCount: _shuffledPhotoPaths.length,
                 itemBuilder: (BuildContext context, int index) {
                   final String imagePath = _shuffledPhotoPaths[index];
-                  return PhotoTile(imagePath: imagePath);
+                  return PhotoTile(
+                    imagePath: imagePath,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PhotoViewerScreen(
+                            allPhotos: _shuffledPhotoPaths,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 },
               ),
             ),
