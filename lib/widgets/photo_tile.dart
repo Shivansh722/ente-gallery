@@ -1,4 +1,6 @@
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 
 class PhotoTile extends StatelessWidget {
   const PhotoTile({
@@ -16,7 +18,14 @@ class PhotoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final double effectiveAspectRatio = aspectRatio ?? 1.0;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.android) {
+          // Haptic feedback provides tactile confirmation of interaction
+          HapticFeedback.lightImpact();
+        }
+        onTap?.call();
+      },
       child: Hero(
         // Hero tag must match between grid tile and viewer for smooth transition
         tag: imagePath,

@@ -1,4 +1,6 @@
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 
 // Threshold prevents micro-gestures from causing jittery column changes.
 // 0.15 means fingers must spread/close ~15% from the baseline distance
@@ -117,10 +119,20 @@ class _PinchDetectorState extends State<PinchDetector> {
   void _handlePinchGesture(double scaleDelta) {
     if (scaleDelta > kPinchThreshold) {
       widget.onColumnCountChange(-1);
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android) {
+        // Haptic feedback provides tactile confirmation of interaction
+        HapticFeedback.selectionClick();
+      }
       // Advance baseline so the next step is measured fresh from here.
       _baselineDistance = _distanceBetweenPointers();
     } else if (scaleDelta < -kPinchThreshold) {
       widget.onColumnCountChange(1);
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android) {
+        // Haptic feedback provides tactile confirmation of interaction
+        HapticFeedback.selectionClick();
+      }
       _baselineDistance = _distanceBetweenPointers();
     }
   }

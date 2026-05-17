@@ -33,7 +33,9 @@ class GalleryMasonry extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         physics: isPinching
             ? const NeverScrollableScrollPhysics()
-            : const AlwaysScrollableScrollPhysics(),
+            : const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
         crossAxisCount: columnCount,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,

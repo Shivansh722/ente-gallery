@@ -32,7 +32,9 @@ class GalleryGrid extends StatelessWidget {
         // GridView does not try to scroll and pinch simultaneously.
         physics: isPinching
             ? const NeverScrollableScrollPhysics()
-            : const AlwaysScrollableScrollPhysics(),
+            : const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columnCount,
           crossAxisSpacing: 8,

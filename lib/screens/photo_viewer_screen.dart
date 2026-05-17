@@ -1,6 +1,8 @@
 import "dart:async";
 
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 
 import "../widgets/viewer_page.dart";
 
@@ -98,7 +100,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     if (_isInteracting || _isCurrentPageZoomed) {
       return const NeverScrollableScrollPhysics();
     }
-    return const AlwaysScrollableScrollPhysics();
+    return const BouncingScrollPhysics(parent: PageScrollPhysics());
   }
 
   @override
@@ -146,9 +148,16 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          onPressed: () => Navigator.of(context).maybePop(),
+                          onPressed: () {
+                            if (defaultTargetPlatform == TargetPlatform.iOS ||
+                                defaultTargetPlatform == TargetPlatform.android) {
+                              // Haptic feedback provides tactile confirmation of interaction
+                              HapticFeedback.lightImpact();
+                            }
+                            Navigator.pop(context);
+                          },
                           icon:
-                              const Icon(Icons.arrow_back, color: Colors.white),
+                              const Icon(Icons.close, color: Colors.white),
                         ),
                         Expanded(
                           child: Center(
