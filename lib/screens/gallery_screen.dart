@@ -1,9 +1,10 @@
 import "package:flutter/material.dart";
 
 import "../services/asset_loader.dart";
+import "../services/image_aspect_loader.dart";
 import "../screens/photo_viewer_screen.dart";
-import "../widgets/photo_tile.dart";
-import "../widgets/pinch_detector.dart";
+import "../widgets/gallery_grid.dart";
+import "../widgets/gallery_masonry.dart";
 
 // Column-count bounds enforced on every pinch event.
 const int kMinColumns = 2;
@@ -22,7 +23,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
   final AssetLoader _assetLoader = const AssetLoader();
 
   List<String> _shuffledPhotoPaths = <String>[];
-  bool _isLoading = true;
+  bool _isLoadingPhotos = true;
+  bool _isLoadingAspectRatios = true;
+
+  Map<String, double>? _aspectRatios;
+  int _aspectRatiosLoaded = 0;
+  int _aspectRatiosTotal = 0;
+
+  bool _isMasonryMode = false;
 
   // Live column count; mutated by pinch gestures.
   int _currentColumnCount = kInitialColumnCount;
@@ -49,7 +57,38 @@ class _GalleryScreenState extends State<GalleryScreen> {
     setState(() {
       _shuffledPhotoPaths = shuffledPhotoPaths;
       // Flip the loading flag after data is ready to render.
-      _isLoading = false;
+      _isLoadingPhotos = false;
+      _isLoadingAspectRatios = true;
+      _aspectRatiosLoaded = 0;
+      _aspectRatiosTotal = shuffledPhotoPaths.length;
+    });
+
+    // Preload aspect ratios to avoid layout jank during scroll
+    await _loadAspectRatios(shuffledPhotoPaths);
+  }
+
+  Future<void> _loadAspectRatios(List<String> photoPaths) async {
+    final Map<String, double> ratios = await loadImageAspectRatios(
+      photoPaths,
+      onProgress: (int loadedCount, int totalCount) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _aspectRatiosLoaded = loadedCount;
+          _aspectRatiosTotal = totalCount;
+        });
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _aspectRatios = ratios;
+      _isLoadingAspectRatios = false;
     });
   }
 
@@ -79,6 +118,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
       appBar: AppBar(
         title: const Text("Photo Gallery"),
         actions: [
+          IconButton(
+            icon: Icon(
+              _isMasonryMode ? Icons.view_module : Icons.dashboard,
+            ),
+            tooltip: _isMasonryMode ? "Show grid" : "Show masonry",
+            onPressed: () {
+              setState(() => _isMasonryMode = !_isMasonryMode);
+            },
+          ),
           // Debug indicator: shows the live column count without any dev tool.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -91,45 +139,56 @@ class _GalleryScreenState extends State<GalleryScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : PinchDetector(
-              onColumnCountChange: _onColumnCountChange,
-              onPinchActiveChange: _onPinchActiveChange,
-              child: GridView.builder(
-                padding: const EdgeInsets.all(8),
-                // Freeze scrolling while two fingers are active so the
-                // GridView does not try to scroll and pinch simultaneously.
-                physics: _isPinching
-                    ? const NeverScrollableScrollPhysics()
-                    : const AlwaysScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _currentColumnCount,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _shuffledPhotoPaths.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final String imagePath = _shuffledPhotoPaths[index];
-                  return PhotoTile(
-                    imagePath: imagePath,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PhotoViewerScreen(
-                            allPhotos: _shuffledPhotoPaths,
-                            initialIndex: index,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+      body: _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final bool isLoading =
+        _isLoadingPhotos || _isLoadingAspectRatios || _aspectRatios == null;
+    final bool showDeterminate =
+        _isLoadingAspectRatios && _aspectRatiosTotal > 0;
+    final double? progressValue = showDeterminate
+        ? _aspectRatiosLoaded / _aspectRatiosTotal
+        : null;
+
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(value: progressValue),
+      );
+    }
+
+    final void Function(int index) onPhotoTap = (int index) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PhotoViewerScreen(
+            allPhotos: _shuffledPhotoPaths,
+            initialIndex: index,
+          ),
+        ),
+      );
+    };
+
+    if (_isMasonryMode) {
+      return GalleryMasonry(
+        photos: _shuffledPhotoPaths,
+        aspectRatios: _aspectRatios!,
+        columnCount: _currentColumnCount,
+        isPinching: _isPinching,
+        onColumnCountChange: _onColumnCountChange,
+        onPinchActiveChange: _onPinchActiveChange,
+        onPhotoTap: onPhotoTap,
+      );
+    }
+
+    return GalleryGrid(
+      photos: _shuffledPhotoPaths,
+      columnCount: _currentColumnCount,
+      isPinching: _isPinching,
+      onColumnCountChange: _onColumnCountChange,
+      onPinchActiveChange: _onPinchActiveChange,
+      onPhotoTap: onPhotoTap,
     );
   }
 }
