@@ -32,6 +32,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   bool _isMasonryMode = false;
 
+  bool _didPrecacheImages = false;
+
   // Live column count; mutated by pinch gestures.
   int _currentColumnCount = kInitialColumnCount;
 
@@ -44,6 +46,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
     super.initState();
     // Load assets once at startup to keep build lightweight.
     _loadPhotos();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheImagesIfNeeded();
   }
 
   Future<void> _loadPhotos() async {
@@ -63,8 +71,21 @@ class _GalleryScreenState extends State<GalleryScreen> {
       _aspectRatiosTotal = shuffledPhotoPaths.length;
     });
 
+    _precacheImagesIfNeeded();
+
     // Preload aspect ratios to avoid layout jank during scroll
     await _loadAspectRatios(shuffledPhotoPaths);
+  }
+
+  void _precacheImagesIfNeeded() {
+    if (_didPrecacheImages || _shuffledPhotoPaths.isEmpty) {
+      return;
+    }
+
+    _didPrecacheImages = true;
+    for (final String path in _shuffledPhotoPaths) {
+      precacheImage(AssetImage(path), context);
+    }
   }
 
   Future<void> _loadAspectRatios(List<String> photoPaths) async {

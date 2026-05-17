@@ -27,6 +27,28 @@ class PhotoTile extends StatelessWidget {
             child: Image.asset(
               imagePath,
               fit: BoxFit.cover,
+              cacheHeight: 400,
+              cacheWidth: 400,
+              frameBuilder: (
+                BuildContext context,
+                Widget child,
+                int? frame,
+                bool wasSynchronouslyLoaded,
+              ) {
+                if (wasSynchronouslyLoaded) {
+                  return child;
+                }
+
+                final Widget content = frame == null
+                    ? Container(color: Colors.grey.shade800)
+                    : child;
+
+                return AnimatedOpacity(
+                  opacity: frame == null ? 0 : 1,
+                  duration: const Duration(milliseconds: 200),
+                  child: content,
+                );
+              },
             ),
           ),
         ),
