@@ -30,6 +30,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   bool _isInteracting = false;
   final Map<int, double> _pageScales = <int, double>{};
 
+//sets up the initial state n starts the auto-hide timer so the viewer opens with the app bar visible then fades it out
   @override
   void initState() {
     super.initState();
@@ -39,6 +40,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     _scheduleAutoHide();
   }
 
+//to cancell timer and page controllers - screen cleans up when closed
   @override
   void dispose() {
     _appBarTimer?.cancel();
@@ -46,16 +48,20 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     super.dispose();
   }
 
+//restarts a delayed timer that hides the overlay app bar after inactivity, making switch UI -> IMMERSIVE
   void _scheduleAutoHide() {
     _appBarTimer?.cancel();
     _appBarTimer = Timer(kAppBarAutoHideDuration, () {
       if (!mounted) {
         return;
       }
-      setState(() => _isAppBarVisible = false);
+      setState(() {
+        _isAppBarVisible = false;
+      });
     });
   }
 
+//forces appBar back n resets hide timer - taps bring back the UI control
   void _showAppBar() {
     if (!mounted) {
       return;
@@ -64,6 +70,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     _scheduleAutoHide();
   }
 
+//updates the current photo index after a swipe and refreshes the auto-hide timer
   void _onPageChanged(int index) {
     if (!mounted) {
       return;
@@ -76,6 +83,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     _scheduleAutoHide();
   }
 
+//records whether the user is interacting (pinching/dragging) so paging(pageView) can be disabled during gestures
   void _onInteractionChanged(bool isInteracting) {
     if (!mounted) {
       return;
@@ -83,6 +91,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     setState(() => _isInteracting = isInteracting);
   }
 
+//stores the current zoom scale for the active page,used to detect zoomed state and change scroll behavior
   void _onScaleChanged(double scale) {
     if (!mounted) {
       return;

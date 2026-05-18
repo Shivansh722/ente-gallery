@@ -68,7 +68,6 @@ class _ViewerPageState extends State<ViewerPage>
     super.dispose();
   }
 
-  // ── Animation ──────────────────────────────────────────────────────────────
 
   void _onAnimTick() {
     _controller.value = _animation!.value;
@@ -89,8 +88,6 @@ class _ViewerPageState extends State<ViewerPage>
   void _reportScale() {
     widget.onScaleChanged(_controller.value.getMaxScaleOnAxis());
   }
-
-  // ── Raw pointer tracking ───────────────────────────────────────────────────
   // [Listener] fires before the gesture arena, so we can lock the [PageView]
   // at the moment the second finger lands without waiting for a winner.
 
@@ -110,8 +107,6 @@ class _ViewerPageState extends State<ViewerPage>
   void _onPointerCancel(PointerCancelEvent event) {
     _pointerCount = math.max(0, _pointerCount - 1);
   }
-
-  // ── InteractiveViewer callbacks ────────────────────────────────────────────
 
   void _onInteractionStart(ScaleStartDetails details) {
     if (_animController.isAnimating) _animController.stop();
@@ -171,8 +166,6 @@ class _ViewerPageState extends State<ViewerPage>
     return Matrix4.translationValues(tx, ty, 0)
       ..multiply(Matrix4.diagonal3Values(scale, scale, 1));
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {

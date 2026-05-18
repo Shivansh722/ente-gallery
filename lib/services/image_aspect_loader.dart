@@ -2,6 +2,14 @@ import "dart:async";
 
 import "package:flutter/widgets.dart";
 
+//this file:
+// loads every asset image,
+// measures its width/height,
+// computes a width/height ratio for each path,
+// reports progress,
+// and returns a map of imagePath -> aspectRatio.
+
+//string -> path, double -> aspect ratio
 Future<Map<String, double>> loadImageAspectRatios(
   List<String> imagePaths, {
   void Function(int loadedCount, int totalCount)? onProgress,
@@ -10,14 +18,19 @@ Future<Map<String, double>> loadImageAspectRatios(
   int loadedCount = 0;
   final int totalCount = imagePaths.length;
 
+//call the progress callback with the initial state (0 loaded) so the UI can show an accurate progress indicator from the start
   onProgress?.call(loadedCount, totalCount);
 
+//for each image path, resolve the image and compute its aspect ratio, storing results in a map and updating progress
   final List<Future<void>> tasks = imagePaths.map((String path) async {
     final Completer<ImageInfo> completer = Completer<ImageInfo>();
+    // using Image.asset to leverage Flutter's image caching
     final ImageStream stream =
         Image.asset(path).image.resolve(const ImageConfiguration());
 
     late final ImageStreamListener listener;
+
+
     listener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {
         if (!completer.isCompleted) {
@@ -45,7 +58,9 @@ Future<Map<String, double>> loadImageAspectRatios(
     onProgress?.call(loadedCount, totalCount);
   }).toList();
 
-  // Resolve asset sizes in parallel so the UI can stay responsive.
+//waits for all aspect ratio compute to comp b4 returning the results
   await Future.wait(tasks);
+
   return aspectRatios;
 }
+

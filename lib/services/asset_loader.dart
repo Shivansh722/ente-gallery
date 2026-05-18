@@ -65,7 +65,7 @@ class AssetLoader {
       "assets/gallery/image_059_Image_6.jpg",
     ];
 
-    // Shuffle for visual variety on each app launch.
+    // shuffling for fresh exp
     orderedPhotoPaths.shuffle(Random());
 
     return orderedPhotoPaths;

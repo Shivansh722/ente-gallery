@@ -41,6 +41,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   bool _isMasonryMode = false;
 
+  //prevents _precacheImagesIfNeeded() from running more than once since precaching is expensive and only needs to be done once per app lifecycle.
   bool _didPrecacheImages = false;
 
   // Live column count; mutated by pinch gestures.
@@ -84,7 +85,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     if (!mounted) {
       return;
     }
-
+//storing shuffled state in state, marks photo load comp
     setState(() {
       _shuffledPhotoPaths = shuffledPhotoPaths;
       // Flip the loading flag after data is ready to render.
@@ -93,7 +94,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       _aspectRatiosLoaded = 0;
       _aspectRatiosTotal = shuffledPhotoPaths.length;
     });
-
+//call to warm the image cache so the first scroll is smooth
     _precacheImagesIfNeeded();
 
     // Preload aspect ratios to avoid layout jank during scroll
@@ -136,7 +137,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     });
   }
 
-  // ── pinch callbacks ────────────────────────────────────────────────────────
+  //  pinch callbacks 
 
   /// Adjusts [_currentColumnCount] by [delta] and clamps to valid bounds.
   void _onColumnCountChange(int delta) {
@@ -154,7 +155,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     setState(() => _isPinching = isActive);
   }
 
-  // ── build ──────────────────────────────────────────────────────────────────
+
 
   @override
   Widget build(BuildContext context) {

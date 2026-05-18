@@ -11,19 +11,19 @@ const double kPinchThreshold = 0.15;
 /// scrolling.
 ///
 /// ### Why [Listener] instead of [GestureDetector]?
-/// [GestureDetector] with `onScale*` callbacks enters the **gesture arena**
+/// [GestureDetector] with `onScale*` callbacks enters the gesture arena
 /// and competes with the [GridView]'s vertical-drag recognizer.  On any
 /// ambiguous frame the arena picks a winner and the loser is silenced —
 /// causing either the scroll or the pinch to drop events and feel janky.
 ///
-/// [Listener] receives **raw pointer events before the arena runs**.  It
+/// [Listener] receives raw pointer events before the arena runs.  It
 /// never claims ownership, so single-finger drags pass untouched to the
 /// scroll view while we can still observe all pointer positions for
 /// two-finger distance math.
 ///
-/// ### Column-count direction
-/// - Fingers **spreading** (distance grows, scale > 1) → zoom **in** → fewer columns.
-/// - Fingers **closing**  (distance shrinks, scale < 1) → zoom **out** → more columns.
+///  Column-count direction
+/// - Fingers spreading (distance grows, scale > 1) → zoom in → fewer columns.
+/// - Fingers closing  (distance shrinks, scale < 1) → zoom out → more columns.
 class PinchDetector extends StatefulWidget {
   const PinchDetector({
     required this.child,
@@ -55,7 +55,6 @@ class _PinchDetectorState extends State<PinchDetector> {
 
   bool _pinchActive = false;
 
-  // ── pointer lifecycle ──────────────────────────────────────────────────────
 
   void _onPointerDown(PointerDownEvent event) {
     _pointers[event.pointer] = event.position;
@@ -102,14 +101,11 @@ class _PinchDetectorState extends State<PinchDetector> {
     }
   }
 
-  // ── math ──────────────────────────────────────────────────────────────────
 
   double _distanceBetweenPointers() {
     final List<Offset> pts = _pointers.values.toList();
     return (pts[0] - pts[1]).distance;
   }
-
-  // ── gesture interpretation ─────────────────────────────────────────────────
 
   /// Converts a raw scale delta into a discrete -1 / +1 column change.
   ///
@@ -136,8 +132,6 @@ class _PinchDetectorState extends State<PinchDetector> {
       _baselineDistance = _distanceBetweenPointers();
     }
   }
-
-  // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
